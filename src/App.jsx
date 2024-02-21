@@ -5,7 +5,7 @@ import Home from './Components/Home';
 import Chat from './Components/Chat';
 import io from "socket.io-client";
 import { useState } from 'react';
-const socket = io('http://localhost:4000');
+const socket = io('https://my-chat-backend-b2o3.onrender.com/');
 
 
 function App() {
