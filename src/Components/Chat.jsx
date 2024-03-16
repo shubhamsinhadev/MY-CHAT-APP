@@ -6,8 +6,8 @@ export default function Chat({ socket, username }) {
     const [userId, setUserId] = useState('')
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
+    const [img, setImg] = useState('');
     const ref = useRef(null)
-
     useEffect(() => {
         if (!username) {
             navigate('/')
@@ -18,19 +18,69 @@ export default function Chat({ socket, username }) {
         setInputValue(e.target.value);
     };
 
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!inputValue) {
+        if (!inputValue && !img) {
+            console.log('hi')
             return;
         }
 
-        socket.emit('chat message', {
-            text: inputValue,
-            id: socket.id,
-            username: username
-        });
+
+        if (img) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const image = new Image();
+                image.src = reader.result;
+
+                image.onload = () => {
+
+                    const canvas = document.createElement('canvas');
+                    const maxWidth = 1280; // Set maximum width
+                    const maxHeight = 720; // Set maximum height
+                    let width = image.width;
+                    let height = image.height;
+
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width *= maxHeight / height;
+                            height = maxHeight;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(image, 0, 0, width, height);
+                    canvas.toBlob((dataURL) => {
+                        socket.emit('chat message', {
+                            text: null,
+                            id: socket.id,
+                            username: username,
+                            image: URL.createObjectURL(dataURL)
+                        });
+                    }, 'image/jpeg', 0.6);
+                };
+            };
+            reader.readAsDataURL(img); // Start reading the data of the selected image file
+        } else {
+            socket.emit('chat message', {
+                text: inputValue,
+                id: socket.id,
+                username: username,
+                image: null
+            });
+        }
+
         setInputValue('');
+        setImg('')
     };
+
 
     useEffect(() => {
         const k = ref.current
@@ -46,7 +96,7 @@ export default function Chat({ socket, username }) {
         return () => {
             observer.disconnect();
         };
-    }, [inputValue]);
+    }, []);
 
 
 
@@ -76,49 +126,60 @@ export default function Chat({ socket, username }) {
                         ref={ref}
                         className='w-[100%] flex-1 flex flex-col p-2 gap-2 overflow-scroll overflow-x-hidden'>
                         {messages.map((msg, index) => {
-                            const { id, text, username } = msg;
+                            const { id, text, username, image } = msg;
                             if (id === userId) {
                                 return (
                                     <li key={index} className=' w-[100%] text-white 
                                     flex flex-col items-end'>
-                                        <div className='bg-violet-300 w-fit flex flex-col pl-1 pr-8 py-1 rounded-md'>
-                                            <span className=' text-xs font-bold uppercase '>
-                                                {username}
-                                            </span>
-                                            <span className=' text-lg mt-1'>
-                                                {text}
-                                            </span>
-                                        </div>
+                                        {text &&
+                                            <div className='bg-violet-300 w-fit flex flex-col pl-1 pr-8 py-1 rounded-md'>
+                                                <span className=' text-xs font-bold uppercase '>
+                                                    {username}
+                                                </span>
+                                                <span className=' text-lg mt-1'>
+                                                    {text}
+                                                </span>
+                                            </div>
+                                        }
+                                        {image && <img src={image} className='w-[50vw] max-w-[50vw] object-contain' />}
                                     </li>
                                 )
                             }
                             return (
                                 <li key={index} className=' w-[100%] text-white 
                                 flex flex-col'>
-                                    <div className='bg-green-500 w-fit flex flex-col rounded-md
-                                    pr-8 pl-1 py-1'>
-                                        <span className='text-xs font-bold uppercase'>
-                                            {username}
-                                        </span>
-                                        <span className=' text-lg  mt-1'>
-                                            {text}
-                                        </span>
-                                    </div>
+                                    {text &&
+                                        <div className='bg-green-500 w-fit flex flex-col rounded-md
+                                         pr-8 pl-1 py-1'>
+                                            <span className='text-xs font-bold uppercase'>
+                                                {username}
+                                            </span>
+                                            <span className=' text-lg  mt-1'>
+                                                {text}
+                                            </span>
+                                        </div>
+                                    }
+                                    {image && <img src={image} className=' w-[50vw] max-w-[50vw] object-contain' />}
                                 </li>
                             )
                         })}
                     </ul>
-                    <form onSubmit={handleSubmit} className=" w-[90%] flex h-[50px] mb-2">
+                    <form onSubmit={handleSubmit} className=" w-[90%] grid grid-cols-2 h-[100px] mb-2">
                         <input
                             type="text"
                             value={inputValue}
-                            className=' border-2 border-blue-400 flex-1 rounded-l-md pl-2'
+                            className=' border-2 col-span-2  border-blue-400 flex-1 rounded-l-md pl-2'
                             onChange={handleInputChange} />
+                        <input
+                            type='file'
+                            className=' col-span-2 border flex items-center justify-center'
+                            onChange={(e) => setImg(e.target.files[0])} />
                         <button
                             type="submit"
-                            className=' bg-blue-400 px-4 text-white rounded-r-md hover:bg-blue-600 active:bg-blue-400  
+                            className=' col-span-2  bg-blue-400 px-4 text-white rounded-r-md hover:bg-blue-600 active:bg-blue-400  
                             font-bold'
                         >Send</button>
+
                     </form>
                 </div>
             </div>
