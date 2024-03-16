@@ -8,6 +8,7 @@ export default function Chat({ socket, username }) {
     const [inputValue, setInputValue] = useState('');
     const [img, setImg] = useState('');
     const ref = useRef(null)
+
     useEffect(() => {
         if (!username) {
             navigate('/')
@@ -22,50 +23,21 @@ export default function Chat({ socket, username }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!inputValue && !img) {
-            console.log('hi')
             return;
         }
 
+        let base64 = '';
 
         if (img) {
             const reader = new FileReader();
             reader.onload = () => {
-                const image = new Image();
-                image.src = reader.result;
-
-                image.onload = () => {
-
-                    const canvas = document.createElement('canvas');
-                    const maxWidth = 640; // Set maximum width
-                    const maxHeight = 480; // Set maximum height
-                    let width = image.width;
-                    let height = image.height;
-
-                    if (width > height) {
-                        if (width > maxWidth) {
-                            height *= maxWidth / width;
-                            width = maxWidth;
-                        }
-                    } else {
-                        if (height > maxHeight) {
-                            width *= maxHeight / height;
-                            height = maxHeight;
-                        }
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(image, 0, 0, width, height);
-                    canvas.toBlob((dataURL) => {
-                        socket.emit('chat message', {
-                            text: null,
-                            id: socket.id,
-                            username: username,
-                            image: URL.createObjectURL(dataURL)
-                        });
-                    }, 'image/jpeg', 0.6);
-                };
+                base64 = reader.result;
+                socket.emit('chat message', {
+                    text: null,
+                    id: socket.id,
+                    username: username,
+                    image: base64
+                });
             };
             reader.readAsDataURL(img); // Start reading the data of the selected image file
         } else {
@@ -141,7 +113,7 @@ export default function Chat({ socket, username }) {
                                                 </span>
                                             </div>
                                         }
-                                        {image && <img src={image} className='object-contain' />}
+                                        {image && <img src={image} className='w-[50vw] max-w-[50vw] object-contain' />}
                                     </li>
                                 )
                             }
@@ -159,7 +131,7 @@ export default function Chat({ socket, username }) {
                                             </span>
                                         </div>
                                     }
-                                    {image && <img src={image} className='object-contain' />}
+                                    {image && <img src={image} className=' w-[50vw] max-w-[50vw] object-contain' />}
                                 </li>
                             )
                         })}
