@@ -36,8 +36,8 @@ export default function Chat({ socket, username }) {
                 image.onload = () => {
 
                     const canvas = document.createElement('canvas');
-                    const maxWidth = 1280; // Set maximum width
-                    const maxHeight = 720; // Set maximum height
+                    const maxWidth = 640; // Set maximum width
+                    const maxHeight = 480; // Set maximum height
                     let width = image.width;
                     let height = image.height;
 
