@@ -6,7 +6,7 @@ export default function Chat({ socket, username }) {
     const [userId, setUserId] = useState('')
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
-    const [img, setImg] = useState('');
+    const [output, setOutput] = useState('');
     const ref = useRef(null)
 
     useEffect(() => {
@@ -19,16 +19,56 @@ export default function Chat({ socket, username }) {
         setInputValue(e.target.value);
     };
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async (event) => {
+            const image = new Image();
+            image.src = event.target.result;
+
+            image.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxWidth = 1280; // Set maximum width
+                const maxHeight = 720; // Set maximum height
+                let width = image.width;
+                let height = image.height;
+
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width *= maxHeight / height;
+                        height = maxHeight;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(image, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                    setOutput(blob);
+                }, 'image/jpeg', 0.6); // Set desired quality (0 to 1)
+            };
+        };
+    }
+
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!inputValue && !img) {
+        if (!inputValue && !output) {
             return;
         }
 
         let base64 = '';
 
-        if (img) {
+        if (output) {
             const reader = new FileReader();
             reader.onload = () => {
                 base64 = reader.result;
@@ -39,7 +79,7 @@ export default function Chat({ socket, username }) {
                     image: base64
                 });
             };
-            reader.readAsDataURL(img); // Start reading the data of the selected image file
+            reader.readAsDataURL(output); // Start reading the data of the selected image file
         } else {
             socket.emit('chat message', {
                 text: inputValue,
@@ -50,7 +90,7 @@ export default function Chat({ socket, username }) {
         }
 
         setInputValue('');
-        setImg('')
+        setOutput('');
     };
 
 
@@ -145,7 +185,7 @@ export default function Chat({ socket, username }) {
                         <input
                             type='file'
                             className=' col-span-2 border flex items-center justify-center'
-                            onChange={(e) => setImg(e.target.files[0])} />
+                            onChange={handleImageChange} />
                         <button
                             type="submit"
                             className=' col-span-2  bg-blue-400 px-4 text-white rounded-r-md hover:bg-blue-600 active:bg-blue-400  
