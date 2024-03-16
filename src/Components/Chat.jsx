@@ -153,7 +153,7 @@ export default function Chat({ socket, username }) {
                                                 </span>
                                             </div>
                                         }
-                                        {image && <img src={image} className='w-[50%] max-w-[80%] object-contain' />}
+                                        {image && <img src={image} className='max-w-[80%] aspect-auto object-contain' />}
                                     </li>
                                 )
                             }
@@ -171,7 +171,7 @@ export default function Chat({ socket, username }) {
                                             </span>
                                         </div>
                                     }
-                                    {image && <img src={image} className=' w-[50%] max-w-[80%] object-contain' />}
+                                    {image && <img src={image} className=' max-w-[80%] aspect-auto object-contain' />}
                                 </li>
                             )
                         })}
